@@ -131,10 +131,12 @@ struct Application::Impl {
 
     void InitWindowSystem() {
         if (!window_system_) {
+            utility::LogError("窗口系统尚未初始化")
             window_system_ = std::make_shared<GLFWWindowSystem>();
         }
 
         if (!is_ws_initialized_) {
+            utility::LogError("窗口系统仍然没有初始化")
             window_system_->Initialize();
             is_ws_initialized_ = true;
         }
@@ -146,9 +148,14 @@ struct Application::Impl {
         InitWindowSystem();
 
         // Initialize rendering
-        visualization::rendering::EngineInstance::SelectBackend(
+        bool isRenderingInitialized = visualization::rendering::EngineInstance::SelectBackend(
                 visualization::rendering::EngineInstance::RenderingType::
                         kOpenGL);
+        if (!isRenderingInitialized) {
+            utility::LogError("OpenGL渲染器初始化失败") 
+        }
+
+        return isRenderingInitialized;
     }
 
     void CleanupAfterRunning() {
@@ -264,6 +271,9 @@ void Application::Initialize() {
     // the current directory is where the resources are located. This is a
     // safe assumption when running on macOS and Windows normally.
     auto path = open3d::utility::filesystem::GetWorkingDirectory();
+    if (!path) {
+        open3d.utility.LogError("没找到正确的source路径")
+    }
     // Copy to C string, as some implementations of std::string::c_str()
     // return a very temporary pointer.
     char *argv = strdup(path.c_str());
@@ -289,7 +299,7 @@ void Application::Initialize(const char *resource_path) {
     std::string uiblit_path = std::string(resource_path) + "/ui_blit.filamat";
     if (!utility::filesystem::FileExists(uiblit_path)) {
         utility::LogError(
-                "Resource directory does not have Open3D resources: {}",
+                "source目录没有找到Open3D: {}",
                 resource_path);
     }
 
